@@ -13,12 +13,16 @@ import org.springframework.stereotype.Service;
 
 import com.retail.reward.model.Customer;
 import com.retail.reward.model.Transaction;
+import com.retail.reward.strategy.DefaultRewardStrategy;
+import com.retail.reward.strategy.RewardCalculationStrategy;
 
 /**
  * Service class for handling the reward point calculation logic
  */
 @Service
 public class RewardService {
+
+	private final RewardCalculationStrategy rewardStrategy = new DefaultRewardStrategy();
 
 	/**
 	 * @return map of monthly and total reward data per customer ID
@@ -30,7 +34,7 @@ public class RewardService {
 			Map<String, Integer> monthlyPoints = new LinkedHashMap<>();
 			int totalPoints = 0;
 			for (Transaction txn : customer.getTransactions()) {
-				int points = calculateRewardPoints(txn.getAmount());
+				int points = rewardStrategy.calculateRewardPoints(txn.getAmount());
 				String month = txn.getDate().getMonth().toString();
 				monthlyPoints.put(month, monthlyPoints.getOrDefault(month, 0) + points);
 				totalPoints += points;
@@ -42,21 +46,6 @@ public class RewardService {
 			response.put(customer.getCustomerId(), customerData);
 		}
 		return response;
-	}
-
-	/**
-	 * @param amount transaction amount
-	 * @return calculated reward points based on transaction amount
-	 */
-	private int calculateRewardPoints(double amount) {
-		int points = 0;
-		if (amount > 100) {
-			points += (int) ((amount - 100) * 2);
-			points += 50;
-		} else if (amount > 50) {
-			points += (int) (amount - 50);
-		}
-		return points;
 	}
 
 	/**
